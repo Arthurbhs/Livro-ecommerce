@@ -7,6 +7,7 @@ import Header from "./components/Header.jsx";
 import Login from "./pages/Login.jsx"
 import Cadastro from "./pages/Cadastro.jsx"
 import User from "./pages/userEdit.jsx"
+import Sobre from "./pages/About.jsx"
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/cadastro" element={<Cadastro/>} />
       <Route path="/carrinho" element={<Carrinho />} />
       <Route path="/user/:id" element={<User />} />
+       <Route path="/sobre" element={<Sobre/>} />
       <Route path="/checkout" element={<Checkout />} />
     </Routes>
     </>

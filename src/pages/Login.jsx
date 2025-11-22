@@ -93,7 +93,7 @@ export default function Login() {
           maxWidth: 420,
           borderRadius: 3,
           boxShadow: 6,
-          backgroundColor: "rgba(255, 255, 212, 0.9)", // amarelo claro translúcido
+          backgroundColor: "rgba(241, 241, 212, 0.9)", // amarelo claro translúcido
           backdropFilter: "blur(3px)",
            border: "3px solid #2e7d32",
         }}

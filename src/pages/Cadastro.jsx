@@ -92,7 +92,7 @@ export default function Cadastro() {
           maxWidth: 480,
           borderRadius: 3,
           boxShadow: 6,
-          bgcolor: "rgba(255, 255, 212, 0.9)",
+           backgroundColor: "rgba(241, 241, 212, 0.9)",
           border: "3px solid #2e7d32",
         }}
       >

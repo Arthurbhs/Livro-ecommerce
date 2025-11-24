@@ -15,11 +15,32 @@ export default function FeaturedCarousel({ products }) {
     autoplay: true,
     autoplaySpeed: 4000,
     responsive: [
-      { breakpoint: 1200, settings: { slidesToShow: 3 } },
-      { breakpoint: 900, settings: { slidesToShow: 2 } },
-      { breakpoint: 600, settings: { slidesToShow: 1 } },
-      { breakpoint: 480, settings: { slidesToShow: 1, dots: false } }
-    ]
+      {
+        breakpoint: 1200,
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+      {
+        breakpoint: 900,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 700,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          dots: false,
+        },
+      },
+    ],
   };
 
   return (
@@ -28,7 +49,7 @@ export default function FeaturedCarousel({ products }) {
         width: "100%",
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: { xs: "0 10px", sm: "0 20px" }
+        padding: { xs: "0 10px", sm: "0 20px" },
       }}
     >
       <Slider {...settings}>
@@ -36,12 +57,24 @@ export default function FeaturedCarousel({ products }) {
           <Box
             key={p.id}
             sx={{
-              padding: "10px",
+              padding: { xs: "5px", sm: "10px" },
               display: "flex",
-              justifyContent: "center"
+              justifyContent: "center",
             }}
           >
-            <ProductCard product={p} />
+            {/* 🔥 Ajustando o card conforme o tamanho da tela */}
+            <Box
+              sx={{
+                width: {
+                  xs: "90%",  // celular
+                  sm: "80%",  // tablets
+                  md: "85%",  // laptops
+                  lg: "90%",  // desktops grandes
+                },
+              }}
+            >
+              <ProductCard product={p} />
+            </Box>
           </Box>
         ))}
       </Slider>

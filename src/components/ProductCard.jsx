@@ -10,32 +10,62 @@ export default function ProductCard({ product }) {
   return (
     <Card
       sx={{
-        minWidth: 250,    
-        maxWidth: 320,        // ✅ largura mínima
+        width: {
+          xs: "100%",   // 📱 Ocupa quase toda a largura do slide
+          sm: "100%",
+          md: 280,      // 💻 Tamanho ideal para tablets
+          lg: 300,      // 🖥️ Desktop
+        },
         borderRadius: 3,
         boxShadow: 3,
         overflow: "hidden",
         transition: "transform 0.2s ease",
         "&:hover": {
-          transform: "scale(1.03)",
+          transform: { md: "scale(1.03)" }, // hover só no desktop
           boxShadow: 6,
         },
       }}
     >
       <CardMedia
         component="img"
-        height="200"
         image={product.imageUrl}
         alt={product.name}
-        sx={{ objectFit: "cover" }}
+        sx={{
+          height: {
+            xs: 180,   // menor no celular
+            sm: 200,
+            md: 220,
+            lg: 240,   // maior em telas grandes
+          },
+          objectFit: "cover",
+        }}
       />
 
       <CardContent>
-        <Typography variant="h6" fontWeight="bold">
+        <Typography
+          variant="h6"
+          fontWeight="bold"
+          sx={{
+            fontSize: {
+              xs: "1rem",
+              sm: "1.05rem",
+              md: "1.1rem",
+            },
+          }}
+        >
           {product.name}
         </Typography>
 
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            fontSize: {
+              xs: "0.85rem",
+              sm: "0.9rem",
+            },
+          }}
+        >
           Autor: {product.author}
         </Typography>
 
@@ -49,7 +79,15 @@ export default function ProductCard({ product }) {
 
         <Typography
           variant="h6"
-          sx={{ mt: 1, fontWeight: "bold" }}
+          sx={{
+            mt: 1,
+            fontWeight: "bold",
+            fontSize: {
+              xs: "1rem",
+              sm: "1.1rem",
+              md: "1.15rem",
+            },
+          }}
         >
           R$ {product.price}
         </Typography>

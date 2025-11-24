@@ -20,7 +20,7 @@ import { doc, setDoc } from "firebase/firestore";
 export default function Cadastro() {
   const [form, setForm] = useState({
     nome: "",
-    rg: "",
+    cpf: "",
     email: "",
     senha: "",
     repetirSenha: ""
@@ -56,11 +56,12 @@ export default function Cadastro() {
 
       const user = cred.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        nome: form.nome,
-        rg: form.rg,
-        email: form.email
-      });
+     await setDoc(doc(db, "users", user.uid), {
+  nome: form.nome,
+  cpf: form.cpf,
+  email: form.email
+});
+
 
       alert("Cadastro realizado com sucesso!");
     } catch (error) {
@@ -126,22 +127,25 @@ export default function Cadastro() {
             />
 <TextField
   fullWidth
-  label="RG"
-  name="rg"
+  label="CPF"
+  name="cpf"
   margin="normal"
   required
-  value={form.rg}
+  value={form.cpf}
   onChange={(e) => {
-    let v = e.target.value.replace(/\D/g, "");
-    if (v.length > 9) v = v.slice(0, 9);
+    let v = e.target.value.replace(/\D/g, ""); // remove tudo que não for número
 
-    v = v.replace(/(\d{2})(\d)/, "$1.$2");
+    if (v.length > 11) v = v.slice(0, 11); // CPF tem 11 dígitos
+
+    // MÁSCARA CPF CORRETA
     v = v.replace(/(\d{3})(\d)/, "$1.$2");
-    v = v.replace(/(\d{3})(\d)/, "$1-$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
-    setForm({ ...form, rg: v });
+    setForm({ ...form, cpf: v });
   }}
 />
+
 
 
             {/* Email */}

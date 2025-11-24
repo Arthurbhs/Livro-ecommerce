@@ -9,7 +9,12 @@ export function useInView(threshold = 0.2) {
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold }
+      {
+        threshold,
+        rootMargin: "0px 0px -20% 0px" 
+        // ↑ reduz a área inferior do viewport,
+        // impedindo que o elemento fique "entrando e saindo" da visão
+      }
     );
 
     if (ref.current) observer.observe(ref.current);

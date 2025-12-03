@@ -1,16 +1,42 @@
 import { Drawer, Box, Typography, Button, Stack, Avatar } from "@mui/material";
 import { Link } from "react-router-dom";
-import { auth } from "../api/firebaseConfig";
+import { useState, useEffect } from "react";
+import { auth, db } from "../api/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import AdminButton from "./inserirProduto";
 
 export default function UserDrawer({ open, setOpen, user }) {
+  const [userData, setUserData] = useState(null);
+
   const handleLogout = () => {
     auth.signOut();
     setOpen(false);
   };
 
+  // 🔥 Carrega avatar verdadeiro do Firestore
+  useEffect(() => {
+    async function loadUserData() {
+      if (!user) return;
+
+      let ref = doc(db, "users", user.uid);
+      let snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        ref = doc(db, "admins", user.uid);
+        snap = await getDoc(ref);
+      }
+
+      if (snap.exists()) {
+        setUserData(snap.data());
+      }
+    }
+
+    loadUserData();
+  }, [user]);
+
   const avatar =
-    user?.avatar ||          // Avatar salvo no Firestore (base64)
-    user?.photoURL || "";    // Avatar padrão do auth (Google, etc.)
+    userData?.avatar ||     // Avatar salvo no Firestore (base64)
+    user?.photoURL || "";   // Padrão do Google Auth
 
   return (
     <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
@@ -28,7 +54,7 @@ export default function UserDrawer({ open, setOpen, user }) {
           textAlign: "center"
         }}
       >
-        {/* AVATAR DO USUÁRIO */}
+        {/* AVATAR */}
         <Avatar
           src={avatar}
           alt="Avatar"
@@ -40,28 +66,30 @@ export default function UserDrawer({ open, setOpen, user }) {
           }}
         />
 
-        {/* NOME DO USUÁRIO */}
+        {/* NOME */}
         <Typography variant="h6" fontWeight={600} sx={{ color: "#fff" }}>
-          {user?.displayName ?? "Usuário"}
+          {userData?.nome || user?.displayName || "Usuário"}
         </Typography>
 
         <Stack spacing={2} sx={{ width: "100%", mt: 2 }}>
-          <Button
-            variant="contained"
-            component={Link}
-            to={`/user/${user.uid}`}
-            onClick={() => setOpen(false)}
-            sx={{
-              textTransform: "none",
-              backgroundColor: "#0bccc2ff",
-              color: "#000",
-              "&:hover": {
-                backgroundColor: "#00f7ebff"
-              }
-            }}
-          >
-            Editar Perfil
-          </Button>
+          {user && (
+            <Button
+              variant="contained"
+              component={Link}
+              to={`/user/${user.uid}`}
+              onClick={() => setOpen(false)}
+              sx={{
+                textTransform: "none",
+                backgroundColor: "#0bccc2ff",
+                color: "#000",
+                "&:hover": {
+                  backgroundColor: "#00f7ebff"
+                }
+              }}
+            >
+              Editar Perfil
+            </Button>
+          )}
 
           <Button
             variant="contained"
@@ -79,6 +107,9 @@ export default function UserDrawer({ open, setOpen, user }) {
           >
             Meu Carrinho
           </Button>
+
+          {/* Botão administrador */}
+          <AdminButton />
 
           <Button
             variant="outlined"

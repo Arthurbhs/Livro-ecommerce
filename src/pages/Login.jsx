@@ -12,7 +12,7 @@ import {
 import { auth, db } from "../api/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -23,52 +23,76 @@ export default function Login() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const navigate = useNavigate(); // 🔥 redirecionamento
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErro("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErro("");
 
-    try {
-      const cred = await signInWithEmailAndPassword(
-        auth,
-        form.email,
-        form.senha
-      );
+  try {
+    // 🔥 LOGIN NO AUTH
+    const cred = await signInWithEmailAndPassword(auth, form.email, form.senha);
+    const user = cred.user;
 
-      const user = cred.user;
+    // ------------------------------------------
+    // 🔥 BUSCAR EM users/
+    // ------------------------------------------
+    const userRef = doc(db, "users", user.uid);
+    let snap = await getDoc(userRef);
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        setErro("Usuário não encontrado no banco de dados.");
-        setLoading(false);
-        return;
-      }
-
-      const dados = userSnap.data();
-      alert(`Bem-vindo(a), ${dados.nome}!`);
-
-    } catch (error) {
-      console.error("Erro no login:", error);
-
-      if (error.code === "auth/user-not-found") {
-        setErro("E-mail não cadastrado.");
-      } else if (error.code === "auth/wrong-password") {
-        setErro("Senha incorreta.");
-      } else if (error.code === "auth/invalid-email") {
-        setErro("E-mail inválido.");
-      } else {
-        setErro("Erro ao fazer login.");
-      }
-    } finally {
-      setLoading(false);
+    // ------------------------------------------
+    // 🔥 SE NÃO EXISTE EM /users, TENTA /admins
+    // ------------------------------------------
+    if (!snap.exists()) {
+      const adminRef = doc(db, "admins", user.uid);
+      snap = await getDoc(adminRef);
     }
-  };
+
+    // ------------------------------------------
+    // 🔥 SE NÃO EXISTE EM NENHUMA DAS DUAS
+    // ------------------------------------------
+    if (!snap.exists()) {
+      setErro("Usuário não encontrado no banco de dados.");
+      setLoading(false);
+      return;
+    }
+
+    const dados = snap.data();
+
+    // ------------------------------------------
+    // 🔥 IDENTIFICAR USUÁRIO OU ADM
+    // ------------------------------------------
+    if (dados.tipo === "adm") {
+      alert(`Bem-vindo(a), ${dados.nome}! (Administrador)`);
+      navigate("/painel-admin");
+    } else {
+      alert(`Bem-vindo(a), ${dados.nome}!`);
+      navigate("/home");
+    }
+
+  } catch (error) {
+    console.error("Erro no login:", error);
+
+    if (error.code === "auth/user-not-found") {
+      setErro("E-mail não cadastrado.");
+    } else if (error.code === "auth/wrong-password") {
+      setErro("Senha incorreta.");
+    } else if (error.code === "auth/invalid-email") {
+      setErro("E-mail inválido.");
+    } else {
+      setErro("Erro ao fazer login.");
+    }
+
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <Box
@@ -80,7 +104,7 @@ export default function Login() {
         alignItems: "center",
         padding: 2,
 
-        // 🔥 FUNDO COM A IMAGEM
+        // 🔥 FUNDO COM IMAGEM
         backgroundImage: "url('/biblioteca.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -93,9 +117,9 @@ export default function Login() {
           maxWidth: 420,
           borderRadius: 3,
           boxShadow: 6,
-          backgroundColor: "rgba(241, 241, 212, 0.9)", // amarelo claro translúcido
+          backgroundColor: "rgba(241, 241, 212, 0.9)",
           backdropFilter: "blur(3px)",
-           border: "3px solid #2e7d32",
+          border: "3px solid #2e7d32",
         }}
       >
         <CardContent>
@@ -104,7 +128,7 @@ export default function Login() {
             textAlign="center"
             fontWeight="bold"
             mb={3}
-            sx={{ color: "#1b5e20" }} // verde escuro
+            sx={{ color: "#1b5e20" }}
           >
             Login
           </Typography>
@@ -146,7 +170,7 @@ export default function Login() {
               sx={{
                 mt: 3,
                 padding: 1.5,
-                backgroundColor: "#2e7d32", // verde forte
+                backgroundColor: "#2e7d32",
                 "&:hover": {
                   backgroundColor: "#1b5e20",
                 },
@@ -156,13 +180,12 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* 🔗 LINK PARA CADASTRAR */}
           <Typography textAlign="center" mt={3}>
             <MuiLink
               component={Link}
               to="/cadastro"
               sx={{
-                color: "#1b5e20", // amarelo forte
+                color: "#1b5e20",
                 fontWeight: "bold",
                 "&:hover": {
                   color: "#f9a825",

@@ -1,97 +1,52 @@
-import {
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Rating
-} from "@mui/material";
+import { Card, CardMedia, CardContent, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
 
 export default function ProductCard({ product }) {
   return (
-    <Card
-      sx={{
-        width: {
-          xs: "100%",   // 📱 Ocupa quase toda a largura do slide
-          sm: "100%",
-          md: 280,      // 💻 Tamanho ideal para tablets
-          lg: 300,      // 🖥️ Desktop
-        },
-        borderRadius: 3,
-        boxShadow: 3,
-        overflow: "hidden",
-        transition: "transform 0.2s ease",
-        "&:hover": {
-          transform: { md: "scale(1.03)" }, // hover só no desktop
-          boxShadow: 6,
-        },
-      }}
+    <Link
+      to={`/product/${product.id}`}
+      style={{ textDecoration: "none", color: "inherit" }}
     >
-      <CardMedia
-        component="img"
-        image={product.imageUrl}
-        alt={product.name}
+      <Card
         sx={{
-          height: {
-            xs: 180,   // menor no celular
-            sm: 200,
-            md: 220,
-            lg: 240,   // maior em telas grandes
+          width: { xs: "100%", sm: "100%", md: 280, lg: 300 },
+          borderRadius: 3,
+          boxShadow: 3,
+          overflow: "hidden",
+          cursor: "pointer",
+          transition: "transform 0.2s ease",
+          "&:hover": {
+            transform: { md: "scale(1.03)" },
+            boxShadow: 6,
           },
-          objectFit: "cover",
         }}
-      />
-
-      <CardContent>
-        <Typography
-          variant="h6"
-          fontWeight="bold"
+      >
+        <CardMedia
+          component="img"
+          image={product.imagem}
+          alt={product.titulo}
           sx={{
-            fontSize: {
-              xs: "1rem",
-              sm: "1.05rem",
-              md: "1.1rem",
-            },
+            height: { xs: 220, sm: 240, md: 260, lg: 280 },
+            objectFit: "contain",   // 🔥 mostra a imagem inteira sem cortar
+            backgroundColor: "#fff" // fundo branco para capas verticais
           }}
-        >
-          {product.name}
-        </Typography>
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            fontSize: {
-              xs: "0.85rem",
-              sm: "0.9rem",
-            },
-          }}
-        >
-          Autor: {product.author}
-        </Typography>
-
-        <Rating
-          name="read-only"
-          value={product.rating || 4}
-          readOnly
-          size="small"
-          sx={{ mt: 1 }}
         />
 
-        <Typography
-          variant="h6"
-          sx={{
-            mt: 1,
-            fontWeight: "bold",
-            fontSize: {
-              xs: "1rem",
-              sm: "1.1rem",
-              md: "1.15rem",
-            },
-          }}
-        >
-          R$ {product.price}
-        </Typography>
-      </CardContent>
-    </Card>
+        <CardContent>
+          <Typography variant="h6" fontWeight="bold">
+            {product.titulo}
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            Autor: {product.autor}
+          </Typography>
+            <Typography variant="body2" color="text.secondary">Editora: {product.editora}</Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            R$ {product.preco}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

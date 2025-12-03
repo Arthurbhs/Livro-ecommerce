@@ -7,41 +7,6 @@ import FeaturedCarousel from "../components/FeaturedCarousel";
 import { Box, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-const featuredProducts = [
-  {
-    id: 1,
-    name: "Camisa Periferia",
-    author: "João Silva",
-    rating: 4.5,
-    price: 79.9,
-    imageUrl: "/produtos/camisa1.png",
-  },
-  {
-    id: 2,
-    name: "Boné Original",
-    author: "Maria Souza",
-    rating: 5,
-    price: 59.9,
-    imageUrl: "/produtos/bone1.png",
-  },
-  {
-    id: 3,
-    name: "Camisa Periferia",
-    author: "João Silva",
-    rating: 4.5,
-    price: 79.9,
-    imageUrl: "/produtos/camisa1.png",
-  },
-  {
-    id: 4,
-    name: "Boné Original",
-    author: "Maria Souza",
-    rating: 5,
-    price: 59.9,
-    imageUrl: "/produtos/bone1.png",
-  },
-];
-
 export default function Home() {
   const [products, setProducts] = useState([]);
   const addItem = useCart((state) => state.addItem);
@@ -49,13 +14,25 @@ export default function Home() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  // ==================================================
+  // Buscar produtos do Firestore
+  // ==================================================
   useEffect(() => {
-    const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, "products"));
-      setProducts(
-        querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      );
-    };
+    async function fetchProducts() {
+      try {
+        const snap = await getDocs(collection(db, "products"));
+
+        const list = snap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setProducts(list);
+      } catch (err) {
+        console.error("Erro ao carregar produtos:", err);
+      }
+    }
+
     fetchProducts();
   }, []);
 
@@ -66,21 +43,19 @@ export default function Home() {
       <Box
         sx={{
           width: "100%",
-          height: isMobile ? "40vh" : "65vh", // adapta à tela
+          height: isMobile ? "40vh" : "65vh",
           backgroundImage: "url('/Hero.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-
-          // remove fixed no mobile (corrige bugs no Android/iOS)
           backgroundAttachment: isMobile ? "scroll" : "fixed",
-
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
         }}
       />
 
+      {/* CARROSSEL DE PRODUTOS */}
       <Typography
         variant="h4"
         sx={{
@@ -94,8 +69,9 @@ export default function Home() {
         Produtos em Destaque
       </Typography>
 
-      <FeaturedCarousel products={featuredProducts} />
+      <FeaturedCarousel products={products} />
 
+      {/* GRID DE PRODUTOS */}
       <Typography
         variant="h4"
         sx={{
@@ -109,7 +85,7 @@ export default function Home() {
         Mais vendidos
       </Typography>
 
-      <ProductGrid products={featuredProducts} />
+      <ProductGrid products={products} />
     </Box>
   );
 }

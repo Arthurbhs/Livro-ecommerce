@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { auth, db } from "../api/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import UserDrawer from "./UserDrawer";
+import SearchBar from "./SearchBar";
+
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -54,13 +56,20 @@ export default function Header() {
         <Toolbar sx={{ justifyContent: "space-between" }}>
 
           {/* LOGO */}
-          <Box>
-            <img
-              src="/logo_periferia_tem_palavra_transparente.png"
-              alt="Logo"
-              style={{ width: 130 }}
-            />
-          </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+  <img
+    src="/logo_periferia_tem_palavra_transparente.png"
+    alt="Logo"
+    style={{ width: 130 }}
+  />
+
+  {/* BARRA DE PESQUISA AO LADO */}
+  <Box sx={{ width: 260 }}>
+    <SearchBar />
+  </Box>
+</Box>
+
+         
 
           {/* Botões */}
           <Stack direction="row" spacing={2}>

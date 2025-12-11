@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   Box,
   TextField,
@@ -7,11 +8,10 @@ import {
   Typography,
 } from "@mui/material";
 import { db } from "../api/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-
-
-export default function CadastrarProduto() {
+export default function EditarProduto() {
+  const { codigo } = useParams(); // código vindo da URL
   const [form, setForm] = useState({
     titulo: "",
     resumo: "",
@@ -22,14 +22,55 @@ export default function CadastrarProduto() {
     isbn: "",
     preco: "",
     imagem: "",
-      genero: "",
+    genero: "",
   });
-
+  
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoProduto, setCarregandoProduto] = useState(true);
 
   // ======================================
-  // Upload de imagem base64
+  // Carregar produto
+  // ======================================
+  useEffect(() => {
+    async function carregarProduto() {
+      try {
+        const ref = doc(db, "products", codigo);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) {
+          alert("Produto não encontrado!");
+          return;
+        }
+
+        const dados = snap.data();
+        setForm({
+          titulo: dados.titulo,
+          resumo: dados.resumo,
+          autor: dados.autor,
+          editora: dados.editora,
+          ano: dados.ano,
+          paginas: dados.paginas,
+          isbn: dados.isbn,
+          preco: dados.preco,
+          imagem: dados.imagem,
+          genero: dados.genero,
+        });
+
+        setPreview(dados.imagem);
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar produto.");
+      } finally {
+        setCarregandoProduto(false);
+      }
+    }
+    carregarProduto();
+  }, [codigo]);
+
+
+  // ======================================
+  // Upload de imagem
   // ======================================
   function handleImageUpload(e) {
     const file = e.target.files[0];
@@ -43,22 +84,11 @@ export default function CadastrarProduto() {
     reader.readAsDataURL(file);
   }
 
-  // ======================================
-  // Gerar código do produto
-  // ======================================
-  function gerarCodigoProduto() {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let codigo = "";
-    for (let i = 0; i < 8; i++) {
-      codigo += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return codigo;
-  }
 
   // ======================================
-  // Salvar produto
+  // Salvar Atualização
   // ======================================
-  async function cadastrarProduto() {
+  async function salvarAlteracoes() {
     if (!form.titulo || !form.autor || !form.imagem) {
       alert("Preencha pelo menos Título, Autor e Imagem!");
       return;
@@ -67,38 +97,28 @@ export default function CadastrarProduto() {
     try {
       setLoading(true);
 
-      const codigo = gerarCodigoProduto();
-
-      await setDoc(doc(db, "products", codigo), {
+      await updateDoc(doc(db, "products", codigo), {
         ...form,
-        codigo,
         preco: Number(form.preco),
-        criadoEm: new Date(),
+        atualizadoEm: new Date(),
       });
 
-      alert(`Produto cadastrado! Código: ${codigo}`);
-
-      // Zerar formulário
-      setForm({
-        titulo: "",
-        resumo: "",
-        autor: "",
-        editora: "",
-        ano: "",
-        paginas: "",
-        isbn: "",
-        preco: "",
-        imagem: "",
-       genero: "",
-      });
-      setPreview("");
-
+      alert("Produto atualizado com sucesso!");
     } catch (err) {
       console.error(err);
-      alert("Erro ao cadastrar produto.");
+      alert("Erro ao salvar alterações.");
     } finally {
       setLoading(false);
     }
+  }
+
+
+  if (carregandoProduto) {
+    return (
+      <Typography variant="h5" textAlign="center" mt={5}>
+        Carregando produto...
+      </Typography>
+    );
   }
 
   return (
@@ -124,7 +144,7 @@ export default function CadastrarProduto() {
         }}
       >
         <Typography variant="h4" textAlign="center" mb={3} color="#2e7d32">
-          Cadastrar Produto
+          Editar Produto
         </Typography>
 
         {/* Imagem */}
@@ -135,7 +155,7 @@ export default function CadastrarProduto() {
             sx={{ width: 150, height: 200, margin: "0 auto", mb: 1 }}
           />
           <Button variant="outlined" component="label" color="success">
-            Enviar Imagem
+            Trocar Imagem
             <input hidden type="file" accept="image/*" onChange={handleImageUpload} />
           </Button>
         </Box>
@@ -183,6 +203,7 @@ export default function CadastrarProduto() {
           sx={{ mb: 2 }}
         />
 
+
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <TextField
             label="Ano"
@@ -218,16 +239,16 @@ export default function CadastrarProduto() {
           sx={{ mb: 2 }}
         />
 
-        {/* Botão cadastrar */}
+        {/* Botão salvar */}
         <Button
           fullWidth
           sx={{ mt: 3, p: 1.6 }}
           variant="contained"
           color="success"
-          onClick={cadastrarProduto}
+          onClick={salvarAlteracoes}
           disabled={loading}
         >
-          {loading ? "Salvando..." : "Cadastrar Produto"}
+          {loading ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </Box>
     </Box>

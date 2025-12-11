@@ -3,14 +3,15 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./global.css";
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext.jsx"; 
-// certifique-se de criar essa pasta e arquivo
+import { AuthProvider } from "./context/AuthContext.jsx";
+import Header from "./components/Header.jsx";  // <-- ADICIONE ISTO
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+          <Header />     {/* <-- AGORA AQUI! */}
+          <App />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

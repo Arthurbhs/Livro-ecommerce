@@ -104,8 +104,25 @@ export default function UserDrawer({ open, setOpen, user }) {
                 backgroundColor: "#00f7e3ff"
               }
             }}
-          >
+          >wishlist
             Meu Carrinho
+          </Button>
+
+            <Button
+            variant="contained"
+            component={Link}
+            to="/wishlist"
+            onClick={() => setOpen(false)}
+            sx={{
+              textTransform: "none",
+              backgroundColor: "#00aeffff",
+              color: "#000",
+              "&:hover": {
+                backgroundColor: "#00f7e3ff"
+              }
+            }}
+          >
+            Minha lista
           </Button>
 
           {/* Botão administrador */}

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../api/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
+import FreteCalculator from "../components/FreteCalculator";
+import { addToCart } from "../components/cartStorage";
 
 import {
   Box,
@@ -18,9 +20,26 @@ export default function ProductPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+
+
+  useEffect(() => {
+  if (!user) return;
+
+  async function checkWishlist() {
+    const ref = doc(db, "users", user.uid, "wishlist", id);
+    const snap = await getDoc(ref);
+    setIsInWishlist(snap.exists());
+  }
+
+  checkWishlist();
+}, [user, id]);
+
 
   // Carrega produto
   useEffect(() => {
@@ -52,6 +71,43 @@ export default function ProductPage() {
     checkAdmin();
   }, []);
 
+async function addToWishlist(product) {
+  if (!user) {
+    alert("Você precisa estar logado para salvar itens na lista de desejos!");
+    return;
+  }
+
+  const ref = doc(db, "users", user.uid, "wishlist", product.id);
+
+  await setDoc(ref, product, { merge: true });
+
+  alert("Adicionado à lista de desejos! ❤️");
+}
+
+
+async function addToWishlist(product) {
+  if (!user) {
+    alert("Você precisa estar logado!");
+    return;
+  }
+
+  const ref = doc(db, "users", user.uid, "wishlist", product.id);
+
+  await setDoc(ref, product, { merge: true });
+  setIsInWishlist(true);
+}
+
+async function removeFromWishlist() {
+  if (!user) return;
+
+  const ref = doc(db, "users", user.uid, "wishlist", id);
+  await deleteDoc(ref);
+
+  setIsInWishlist(false);
+}
+
+
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
@@ -68,30 +124,23 @@ export default function ProductPage() {
     );
   }
 
+function shareProduct() {
+  const url = window.location.href;
+
+  navigator.clipboard.writeText(url)
+    .then(() => {
+      alert("Link copiado para a área de transferência!");
+    })
+    .catch(() => {
+      alert("Não foi possível copiar o link.");
+    });
+}
+
+
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
       
-      {/* BOTÃO EDITAR – SOMENTE ADMIN */}
-      {isAdmin && (
-        <Button
-          variant="contained"
-          component={Link}
-          to={`/product/editar/${id}`}
-          sx={{
-            mt: 2,
-            textTransform: "none",
-            backgroundColor: "#00ff9d",
-            color: "#000",
-            "&:hover": {
-              backgroundColor: "#00ffa6",
-            },
-          }}
-        >
-          Editar Produto
-        </Button>
-      )}
-
-      {/* CONTAINER PRINCIPAL */}
+     
       <Box
         sx={{
           display: "flex",
@@ -130,37 +179,70 @@ export default function ProductPage() {
             R$ {product.preco}
           </Typography>
 
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#333",
-              px: 4,
-              py: 1.2,
-              fontSize: "1.1rem",
-              mb: 2,
-            }}
-          >
-            🛒 Comprar
-          </Button>
+    <Button
+  variant="contained"
+  sx={{
+    backgroundColor: "#333",
+    px: 4,
+    py: 1.2,
+    fontSize: "1.1rem",
+    mb: 2,
+  }}
+  onClick={() => {
+    console.log("Produto enviado ao carrinho:", product);
+    addToCart(product);
+    alert("Produto adicionado ao carrinho!");
+  }}
+>
+  🛒 Comprar
+</Button>
+
+
 
           <Typography sx={{ color: "green", mb: 3 }}>
             Estoque: <strong>Disponível</strong>
           </Typography>
 
-          <Typography sx={{ fontWeight: "bold", mb: 1 }}>
-            Calcule o frete
-          </Typography>
-
-          <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
-            <TextField label="CEP" size="small" sx={{ width: 140 }} />
-            <Button variant="outlined">OK</Button>
-          </Box>
+        <FreteCalculator/>
 
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-            <Button variant="outlined">+ Lista de Desejos</Button>
-            <Button variant="outlined">Compartilhar</Button>
+            <Button
+  variant={isInWishlist ? "contained" : "outlined"}
+  color={isInWishlist ? "error" : "primary"}
+  onClick={() =>
+    isInWishlist ? removeFromWishlist() : addToWishlist(product)
+  }
+>
+  {isInWishlist ? "Remover da Lista ❤️" : "Adicionar à Lista ❤️"}
+</Button>
+
+
+            <Button variant="outlined" onClick={shareProduct}>
+  Compartilhar 🔗
+</Button>
+
           </Box>
+           {isAdmin && (
+        <Button
+          variant="contained"
+          component={Link}
+          to={`/product/editar/${id}`}
+          sx={{
+            mt: 2,
+            textTransform: "none",
+            backgroundColor: "#00ff9d",
+            color: "#000",
+            "&:hover": {
+              backgroundColor: "#00ffa6",
+            },
+          }}
+        >
+          Editar Produto
+        </Button>
+      )}
+
         </Box>
+        
       </Box>
 
       {/* DESCRIÇÃO */}
@@ -182,6 +264,7 @@ export default function ProductPage() {
         <Typography><strong>Título:</strong> {product.titulo}</Typography>
         <Typography><strong>Autora:</strong> {product.autor}</Typography>
         <Typography><strong>Editora:</strong> {product.editora}</Typography>
+         <Typography><strong>Gênero:</strong> {product.genero}</Typography>
         <Typography><strong>Ano:</strong> {product.ano}</Typography>
         <Typography><strong>Páginas:</strong> {product.paginas}</Typography>
         <Typography><strong>ISBN:</strong> {product.isbn}</Typography>

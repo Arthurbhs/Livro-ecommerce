@@ -4,7 +4,10 @@ import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../api/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import FreteCalculator from "../components/FreteCalculator";
-import { addToCart } from "../components/cartStorage";
+import { addToCart, isInCart, removeFromCart } from "../components/cartStorage";
+import { Snackbar, Alert } from "@mui/material";
+
+
 
 import {
   Box,
@@ -26,6 +29,19 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [alreadyInCart, setAlreadyInCart] = useState(false);
+
+useEffect(() => {
+  if (!product) return;
+  setAlreadyInCart(isInCart(product.id));
+}, [product]);
+
+
+const [snack, setSnack] = useState({
+  open: false,
+  message: "",
+  severity: "success", // success | info | warning | error
+});
 
 
   useEffect(() => {
@@ -73,29 +89,27 @@ export default function ProductPage() {
 
 async function addToWishlist(product) {
   if (!user) {
-    alert("Você precisa estar logado para salvar itens na lista de desejos!");
+    setSnack({
+      open: true,
+      message: "Faça login para usar a lista de desejos",
+      severity: "warning",
+    });
+    navigate("/login");
     return;
   }
 
   const ref = doc(db, "users", user.uid, "wishlist", product.id);
-
   await setDoc(ref, product, { merge: true });
 
-  alert("Adicionado à lista de desejos! ❤️");
-}
-
-
-async function addToWishlist(product) {
-  if (!user) {
-    alert("Você precisa estar logado!");
-    return;
-  }
-
-  const ref = doc(db, "users", user.uid, "wishlist", product.id);
-
-  await setDoc(ref, product, { merge: true });
   setIsInWishlist(true);
+
+  setSnack({
+    open: true,
+    message: "Adicionado à lista de desejos ❤️",
+    severity: "success",
+  });
 }
+
 
 async function removeFromWishlist() {
   if (!user) return;
@@ -104,8 +118,13 @@ async function removeFromWishlist() {
   await deleteDoc(ref);
 
   setIsInWishlist(false);
-}
 
+  setSnack({
+    open: true,
+    message: "Removido da lista de desejos",
+    severity: "info",
+  });
+}
 
 
   if (loading) {
@@ -135,6 +154,42 @@ function shareProduct() {
       alert("Não foi possível copiar o link.");
     });
 }
+
+
+function handleCartToggle() {
+  if (!user) {
+    setSnack({
+      open: true,
+      message: "Você precisa estar logado para usar o carrinho.",
+      severity: "warning",
+    });
+    navigate("/login");
+    return;
+  }
+
+  if (alreadyInCart) {
+    removeFromCart(product.id);
+    setAlreadyInCart(false);
+
+    setSnack({
+      open: true,
+      message: "Produto removido do carrinho",
+      severity: "info",
+    });
+  } else {
+    addToCart(product);
+    setAlreadyInCart(true);
+
+    setSnack({
+      open: true,
+      message: "Produto adicionado ao carrinho 🛒",
+      severity: "success",
+    });
+  }
+}
+
+
+
 
 
   return (
@@ -179,23 +234,26 @@ function shareProduct() {
             R$ {product.preco}
           </Typography>
 
-    <Button
-  variant="contained"
+<Button
+  variant={alreadyInCart ? "outlined" : "contained"}
+  color={alreadyInCart ? "error" : "primary"}
   sx={{
-    backgroundColor: "#333",
     px: 4,
     py: 1.2,
     fontSize: "1.1rem",
     mb: 2,
+    borderWidth: alreadyInCart ? 2 : 0,
   }}
-  onClick={() => {
-    console.log("Produto enviado ao carrinho:", product);
-    addToCart(product);
-    alert("Produto adicionado ao carrinho!");
-  }}
+  title={
+    alreadyInCart
+      ? "Remover produto do carrinho"
+      : "Adicionar produto ao carrinho"
+  }
+  onClick={handleCartToggle}
 >
-  🛒 Comprar
+  {alreadyInCart ? "🗑 Remover do Carrinho" : "🛒 Adicionar ao Carrinho"}
 </Button>
+
 
 
 
@@ -207,6 +265,7 @@ function shareProduct() {
 
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Button
+             disabled={snack.open}
   variant={isInWishlist ? "contained" : "outlined"}
   color={isInWishlist ? "error" : "primary"}
   onClick={() =>
@@ -269,6 +328,22 @@ function shareProduct() {
         <Typography><strong>Páginas:</strong> {product.paginas}</Typography>
         <Typography><strong>ISBN:</strong> {product.isbn}</Typography>
       </Box>
+
+      <Snackbar
+  open={snack.open}
+  autoHideDuration={3000}
+  onClose={() => setSnack({ ...snack, open: false })}
+  anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+>
+  <Alert
+    severity={snack.severity}
+    onClose={() => setSnack({ ...snack, open: false })}
+    sx={{ width: "100%" }}
+  >
+    {snack.message}
+  </Alert>
+</Snackbar>
+
     </Box>
   );
 }

@@ -72,7 +72,7 @@ const handleSubmit = async (e) => {
       navigate("/painel-admin");
     } else {
       alert(`Bem-vindo(a), ${dados.nome}!`);
-      navigate("/home");
+      navigate("/");
     }
 
   } catch (error) {

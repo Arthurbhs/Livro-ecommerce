@@ -104,7 +104,7 @@ export default function UserDrawer({ open, setOpen, user }) {
                 backgroundColor: "#00f7e3ff"
               }
             }}
-          >wishlist
+          >
             Meu Carrinho
           </Button>
 

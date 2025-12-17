@@ -11,8 +11,11 @@ import {
   Divider,
 } from "@mui/material";
 
+
+
 export default function CartPage() {
   const [cart, setCart] = useState([]);
+const [pix, setPix] = useState(null);
 
   useEffect(() => {
     setCart(getCart());
@@ -30,6 +33,37 @@ export default function CartPage() {
       </Box>
     );
   }
+
+
+async function handleCheckout() {
+  try {
+    const response = await fetch("http://localhost:3333/pix/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        valor: total,
+        descricao: "Compra no carrinho",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao gerar PIX");
+    }
+
+    const data = await response.json(); // ✅ AQUI
+
+    console.log("📦 PIX criado:", data);
+    setPix(data);
+
+  } catch (err) {
+    console.error("Erro ao finalizar compra:", err);
+    alert("Erro ao gerar PIX. Tente novamente.");
+  }
+}
+
+
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: 3 }}>
@@ -101,15 +135,59 @@ export default function CartPage() {
           Total: <strong>R$ {total.toFixed(2)}</strong>
         </Typography>
 
-        <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          sx={{ mt: 2 }}
-          onClick={() => alert("Finalizar compra em desenvolvimento...")}
-        >
-          Finalizar Compra
-        </Button>
+       <Button
+  variant="contained"
+  color="success"
+  fullWidth
+  sx={{ mt: 2 }}
+  onClick={handleCheckout}
+>
+  Finalizar Compra
+</Button>
+
+{pix && (
+  <Box
+    sx={{
+      mt: 4,
+      p: 3,
+      border: "2px dashed #2e7d32",
+      borderRadius: 2,
+      backgroundColor: "#f1f8f5",
+      textAlign: "center",
+    }}
+  >
+    <Typography variant="h6" mb={2}>
+      💸 Pague com PIX
+    </Typography>
+
+    {/* QR CODE */}
+    <img
+      src={`https://${pix.location}`}
+      alt="QR Code PIX"
+      style={{ maxWidth: 260, marginBottom: 16 }}
+    />
+
+    {/* COPIA E COLA */}
+    <Typography variant="body2" sx={{ wordBreak: "break-all", mb: 2 }}>
+      {pix.pixCopiaECola}
+    </Typography>
+
+    <Button
+      variant="outlined"
+      onClick={() => {
+        navigator.clipboard.writeText(pix.pixCopiaECola);
+        alert("Código PIX copiado!");
+      }}
+    >
+      Copiar código PIX
+    </Button>
+
+    <Typography sx={{ mt: 2, color: "gray" }}>
+      Após o pagamento, a confirmação é automática.
+    </Typography>
+  </Box>
+)}
+
 
         <Button
           variant="outlined"

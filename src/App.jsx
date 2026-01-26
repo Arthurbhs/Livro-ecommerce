@@ -13,6 +13,7 @@ import ProuctEdit from "./pages/EditarProduto.jsx"
 import CartPage from "./pages/CartPage.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import WishlistPage from "./pages/WishList.jsx"
+import SobrePage from "./pages/Services.jsx";
 
 export default function App() {
   return (
@@ -32,6 +33,8 @@ export default function App() {
       <Route path="/carrinho" element={<CartPage />} />
      <Route path="/buscar" element={<SearchResults />} />
      <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/Nossos_servicos" element={<SobrePage/> } />
+    
 
     </Routes>
   );

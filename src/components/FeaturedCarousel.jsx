@@ -1,7 +1,6 @@
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
 import { Box } from "@mui/material";
 import ProductCard from "./ProductCard";
 
@@ -14,6 +13,7 @@ export default function FeaturedCarousel({ products }) {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 4000,
+    arrows: false,
     responsive: [
       {
         breakpoint: 1200,
@@ -48,8 +48,21 @@ export default function FeaturedCarousel({ products }) {
       sx={{
         width: "100%",
         maxWidth: "1400px",
-        margin: "0 auto",
-        padding: { xs: "0 10px", sm: "0 20px" },
+        mx: "auto", // centraliza horizontalmente
+        px: { xs: 1, sm: 2 },
+        display: "flex",
+        justifyContent: "center",
+        flexDirection: "column",
+        "& .slick-list": {
+          overflow: "hidden",
+        },
+        "& .slick-slide": {
+          display: "flex !important",
+          justifyContent: "center",
+        },
+        "& .slick-dots": {
+          bottom: "-30px",
+        },
       }}
     >
       <Slider {...settings}>
@@ -57,19 +70,18 @@ export default function FeaturedCarousel({ products }) {
           <Box
             key={p.id}
             sx={{
-              padding: { xs: "5px", sm: "10px" },
               display: "flex",
               justifyContent: "center",
+              px: { xs: 1, sm: 2 },
             }}
           >
-            {/* 🔥 Ajustando o card conforme o tamanho da tela */}
             <Box
               sx={{
                 width: {
-                  xs: "90%",  // celular
-                  sm: "80%",  // tablets
-                  md: "85%",  // laptops
-                  lg: "90%",  // desktops grandes
+                  xs: "90%",
+                  sm: "80%",
+                  md: "85%",
+                  lg: "80%",
                 },
               }}
             >

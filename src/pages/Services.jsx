@@ -1,188 +1,176 @@
 import { Box, Typography, Card, CardContent, Grid, Button } from "@mui/material";
+import ContatoSection from "../components/Form";
 
 export default function SobrePage() {
   return (
-    <Box
-      sx={{
-        backgroundColor: "#faf8f5",
-        minHeight: "100vh",
-        py: { xs: 4, md: 8 },
-        px: { xs: 2, md: 6 },
-        textAlign: "center",
-      }}
-    >
-      {/* === SEÇÃO DE APRESENTAÇÃO === */}
-      <Box sx={{ mb: 6, maxWidth: 800, mx: "auto" }}>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: "bold",
-            color: "#f0a243ff",
-            mb: 2,
-          }}
-        >
-          Sobre Nós
-        </Typography>
+    <Box sx={{ backgroundColor: "#faf8f5", minHeight: "100vh" }}>
 
-        <Typography
-          variant="body1"
+      {/* === HERO / APRESENTAÇÃO === */}
+      <Box
+        sx={{
+          minHeight: "80vh",
+          backgroundImage: "url('/fundo_com_livros.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
           sx={{
-            fontSize: "1.1rem",
-            color: "#333",
-            lineHeight: 1.8,
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.65)",
+          }}
+        />
+
+        <Box
+          sx={{
+            position: "relative",
+            maxWidth: 820,
+            px: 3,
+            textAlign: "center",
+            color: "#f5f5f5",
           }}
         >
-          A <b>Periferia tem palavra</b> é uma editora preta de quebrada,
-          voltada para autores negros, negras, LGBTQIAPN+ e periféricos,
-          com o propósito de fortalecer e acessibilizar a literatura entre becos,
-          vielas e encruzilhadas.
-        </Typography>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, color: "#FFD700", mb: 2 }}
+          >
+            Sobre Nós
+          </Typography>
+
+          <Typography sx={{ lineHeight: 1.9, fontSize: "1.05rem" }}>
+            A <b>Periferia tem palavra</b> é uma editora preta de quebrada,
+            voltada para autores negros, negras, LGBTQIAPN+ e periféricos,
+            com o propósito de fortalecer e acessibilizar a literatura entre becos,
+            vielas e encruzilhadas.
+          </Typography>
+        </Box>
+        
       </Box>
+{/* === TRANSIÇÃO ENTRE FUNDOS === */}
+<Box
+  sx={{
+    height: { xs: 120, md: 50 },
+    background: `
+      linear-gradient(
+        to bottom,
+        rgba(41, 41, 41, 1),
+        rgba(17, 17, 17, 0.98)
+      )
+    `,
+  }}
+/>
 
-      {/* === TÍTULO PLANOS === */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h5"
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundImage: "url('/escritorio.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          position: "relative",
+          py: { xs: 8, md: 12 },
+        }}
+      >
+        
+        <Box
           sx={{
-            fontWeight: "bold",
-            color: "#f0a243ff",
-            mb: 1,
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+          }}
+        />
+
+        <Box
+          sx={{
+            position: "relative",
+            maxWidth: 1200,
+            mx: "auto",
+            px: 3,
+            textAlign: "center",
           }}
         >
-          Transformando o sonho em realidade
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: "#555" }}>
-          Publique seu livro em baixa tiragem e conquiste seu público.
-        </Typography>
-      </Box>
+          <Typography
+            variant="h5"
+            sx={{ color: "#FFD700", fontWeight: 700, mb: 2 }}
+          >
+            Transformando o sonho em realidade
+          </Typography>
 
-      {/* === SEÇÃO DE PLANOS === */}
-      <Grid container spacing={4} justifyContent="center">
-        {/* === CARD 1 === */}
-        <Grid item xs={12} sm={6} md={5}>
-          <Card
+          <Typography
             sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-              backgroundColor: "#fff",
-              transition: "transform 0.3s",
-              "&:hover": { transform: "translateY(-5px)" },
+              color: "#f0f0f0",
+              mb: 6,
+              fontSize: "1.05rem",
             }}
           >
-            <CardContent>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: "bold", color: "#f0a243ff", mb: 2 }}
-              >
-                Plano de Publicação
-              </Typography>
+            Publique seu livro em baixa tiragem e conquiste seu público.
+          </Typography>
 
-              <Typography
-                variant="body2"
-                sx={{ color: "#333", lineHeight: 1.7, textAlign: "left" }}
-              >
-                <b>Formato tamanho:</b> 14x21cm <br />
-                <b>Capa:</b> papel cartão 300g (com orelhas 6cm) <br />
-                <b>Miolo:</b> papel pólen 80g <br />
-                <b>N° de páginas:</b> até 100 <br />
-                <b>Valor:</b> R$ 3.215,00 <br />
-                <b>Quantidade:</b> 100 exemplares
-              </Typography>
-
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant="subtitle1"
+          <Grid
+            container
+            spacing={4}
+            justifyContent="center"
+          >
+            {[{
+              title: "Plano de Publicação",
+              content: (
+                <>
+                  <b>Formato:</b> 14x21cm <br />
+                  <b>Capa:</b> papel cartão 300g <br />
+                  <b>Miolo:</b> papel pólen 80g <br />
+                  <b>Páginas:</b> até 100 <br />
+                  <b>Valor:</b> R$ 3.215,00 <br />
+                  <b>Quantidade:</b> 100 exemplares
+                </>
+              ),
+              align: "left"
+            }].map((card, i) => (
+              <Grid item xs={12} md={5} key={i}>
+                <Card
                   sx={{
-                    fontWeight: "bold",
-                    color: "#f0a243ff",
-                    mb: 1,
+                    height: "100%",
+                    borderRadius: 4,
+                    backgroundColor: "rgba(255,255,255,0.92)",
+                    backdropFilter: "blur(6px)",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
                   }}
                 >
-                  Serviços Inclusos
-                </Typography>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        color: "#f0a243",
+                        mb: 2,
+                        fontSize: "1.15rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      {card.title}
+                    </Typography>
 
-                <Typography
-                  variant="body2"
-                  sx={{ color: "#333", textAlign: "left", lineHeight: 1.7 }}
-                >
-                  • Projeto Gráfico do livro <br />
-                  • Criação de capa <br />
-                  • Diagramação <br />
-                  • ISBN e Registro <br />
-                  • Frete a combinar
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* === CARD 2 === */}
-        <Grid item xs={12} sm={6} md={5}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-              backgroundColor: "#fff",
-              transition: "transform 0.3s",
-              "&:hover": { transform: "translateY(-5px)" },
-            }}
-          >
-            <CardContent>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: "bold", color: "#f0a243ff", mb: 2 }}
-              >
-                Assessoria em Publicação
-              </Typography>
-
-              <Typography
-                variant="body2"
-                sx={{ color: "#333", textAlign: "left", lineHeight: 1.7 }}
-              >
-                A <b>editora Periferia tem palavra</b> oferece assessoria,
-                suporte técnico e criativo ao seu projeto, através de um
-                acompanhamento personalizado que será desenvolvido de acordo
-                com a necessidade de cada obra.
-              </Typography>
-
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: "bold", color: "#f0a243ff", mb: 1 }}
-                >
-                  Valor da Assessoria
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  sx={{ color: "#333", textAlign: "left" }}
-                >
-                  Entre em contato para maiores informações.
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* === BOTÃO DE CONTATO === */}
-      <Box sx={{ mt: 6 }}>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: "#f0a243ff",
-            "&:hover": { backgroundColor: "#e08c1e" },
-            color: "#fff",
-            borderRadius: 2,
-            px: 4,
-            py: 1.5,
-            fontWeight: "bold",
-          }}
-          href="/contato"
-        >
-          Entre em Contato
-        </Button>
+                    <Typography
+                      sx={{
+                        color: "#222",
+                        lineHeight: 1.8,
+                        textAlign: card.align,
+                      }}
+                    >
+                      {card.content}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Box>
+
+   
+      <ContatoSection/>
     </Box>
   );
 }

@@ -69,66 +69,86 @@ export default function Header() {
         }}
       >
         <Toolbar
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            px: 2,
-          }}
-        >
-          {/* LOGO */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <img
-              src="/logo_periferia_tem_palavra_transparente.png"
-              alt="Logo"
-              style={{
-                width: isMobile ? 100 : 130,
-              }}
-            />
-          </Box>
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    px: 2,
+  }}
+>
+  {/* LOGO */}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <img
+      src="/logo_periferia_tem_palavra_transparente.png"
+      alt="Logo"
+      style={{ width: isMobile ? 100 : 130 }}
+    />
+  </Box>
 
-          {/* Desktop Search + Buttons */}
-          {!isMobile && (
-            <>
-              <Box sx={{ width: 260 }}>
-                <SearchBar />
-              </Box>
+  {/* DESKTOP */}
+  {!isMobile && (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        ml: "auto",
+      }}
+    >
+      {/* SEARCH DESKTOP */}
+      <Box sx={{ width: 260 }}>
+        <SearchBar />
+      </Box>
 
-              <Box>
-                <Button component={Link} to="/" sx={{ color: "#fff" }}>
-                  Home
-                </Button>
-                <Button component={Link} to="/sobre" sx={{ color: "#fff" }}>
-                  Sobre Nós
-                </Button>
-                {user ? (
-                  <Button
-                    sx={{ color: "#fff" }}
-                    onClick={() => setDrawerOpen(true)}
-                  >
-                    Minha Conta
-                  </Button>
-                ) : (
-                  <Button component={Link} to="/login" sx={{ color: "#fff" }}>
-                    Login
-                  </Button>
-                )}
-              </Box>
-            </>
-          )}
+      {/* MENU DESKTOP */}
+      <Box>
+        <Button component={Link} to="/" sx={{ color: "#fff" }}>
+          Home
+        </Button>
+        <Button component={Link} to="/sobre" sx={{ color: "#fff" }}>
+          Sobre Nós
+        </Button>
+        <Button component={Link} to="/Nossos_servicos" sx={{ color: "#fff" }}>
+         Serviços
+        </Button>
+        {user ? (
+          <Button sx={{ color: "#fff" }} onClick={() => setDrawerOpen(true)}>
+            Minha Conta
+          </Button>
+        ) : (
+          <Button component={Link} to="/login" sx={{ color: "#fff" }}>
+            Login
+          </Button>
+        )}
+      </Box>
+    </Box>
+  )}
 
-          {/* Mobile icons */}
-          {isMobile && (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <SearchBar />
-              <IconButton
-                sx={{ color: "#fff", ml: 1 }}
-                onClick={() => setMenuOpen(true)}
-              >
-                <MenuIcon />
-              </IconButton>
-            </Box>
-          )}
-        </Toolbar>
+  {/* MOBILE */}
+  {isMobile && (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        ml: "auto",
+      }}
+    >
+      {/* SEARCH MOBILE */}
+      <Box sx={{ maxWidth: 180 }}>
+        <SearchBar />
+      </Box>
+
+      {/* MENU MOBILE */}
+      <IconButton
+        sx={{ color: "#fff" }}
+        onClick={() => setMenuOpen(true)}
+      >
+        <MenuIcon />
+      </IconButton>
+    </Box>
+  )}
+</Toolbar>
+
       </AppBar>
 
       {/* Drawer lateral no mobile */}

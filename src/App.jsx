@@ -14,6 +14,7 @@ import CartPage from "./pages/CartPage.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
 import WishlistPage from "./pages/WishList.jsx"
 import SobrePage from "./pages/Services.jsx";
+import AguasAncestraisPage from "./pages/AguasAncestraisPage.jsx";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
      <Route path="/buscar" element={<SearchResults />} />
      <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/Nossos_servicos" element={<SobrePage/> } />
+        <Route path="/aguas_ancestrais" element={<AguasAncestraisPage/> } />
     
 
     </Routes>

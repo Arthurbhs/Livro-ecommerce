@@ -30,6 +30,11 @@ export default function ProductPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [alreadyInCart, setAlreadyInCart] = useState(false);
+useEffect(() => {
+  if (id === "T7KOHEA6") {
+    navigate("/aguas_ancestrais");
+  }
+}, [id, navigate]);
 
 useEffect(() => {
   if (!product) return;
@@ -72,20 +77,26 @@ const [snack, setSnack] = useState({
 
     fetchProduct();
   }, [id]);
+// Verifica admin corretamente
+useEffect(() => {
+  if (!user) {
+    setIsAdmin(false);
+    return;
+  }
 
-  // Verifica admin
-  useEffect(() => {
-    async function checkAdmin() {
-      if (!auth.currentUser) return;
+  async function checkAdmin() {
+    const refAdmin = doc(db, "admins", user.uid);
+    const snapAdmin = await getDoc(refAdmin);
 
-      const refAdmin = doc(db, "admins", auth.currentUser.uid);
-      const snapAdmin = await getDoc(refAdmin);
+    console.log("UID logado:", user.uid);
+    console.log("Admin existe?", snapAdmin.exists());
 
-      setIsAdmin(snapAdmin.exists());
-    }
+    setIsAdmin(snapAdmin.exists());
+  }
 
-    checkAdmin();
-  }, []);
+  checkAdmin();
+}, [user]);
+
 
 async function addToWishlist(product) {
   if (!user) {
@@ -279,6 +290,27 @@ function handleCartToggle() {
             <Button variant="outlined" onClick={shareProduct}>
   Compartilhar 🔗
 </Button>
+
+{isAdmin && (
+  <Button
+    variant="contained"
+    component={Link}
+    to={`/product/editar/${product.id}`}
+    sx={{
+      mt: 2,
+      textTransform: "none",
+      backgroundColor: "#00ff9d",
+      color: "#000",
+      fontWeight: "bold",
+      "&:hover": {
+        backgroundColor: "#00ffa6",
+      },
+    }}
+  >
+    ✏️ Editar Produto
+  </Button>
+)}
+
 
           </Box>
            {isAdmin && (

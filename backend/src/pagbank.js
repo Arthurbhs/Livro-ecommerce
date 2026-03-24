@@ -1,66 +1,70 @@
+import dotenv from "dotenv";
+dotenv.config();
+import { createOrderWithCreditCard } from "./pagbankChargeService.js";
 import axios from "axios";
+import crypto from "crypto";
+import {
+  auditPagBankRequest,
+  auditPagBankResponse,
+  auditPagBankError
+} from "./pagbankLogger.js";
 
-import forge from "node-forge";
+const PAGBANK_TOKEN = process.env.PAGBANK_TOKEN?.trim();
 
+if (!PAGBANK_TOKEN) {
+  throw new Error("PAGBANK_TOKEN não definido");
+}
+
+const PAGBANK_API = "https://api.pagseguro.com";
 /**
- * ===============================
- * CONFIGURAÇÕES GERAIS (PRODUÇÃO)
- * ===============================
- * PagBank NÃO possui sandbox real para Orders.
- * Sempre usamos endpoint de produção + token de produção.
+ * Envia pedido para o PagBank (Sandbox)
+ * Autenticação via AppKey (Bearer Token)
  */
-const PAGBANK_API = "https://api.pagseguro.com/orders";
+async function enviarPedidoPagBank(payload) {
+  const requestId = crypto.randomUUID();
 
-const headers = {
-  Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
-  "Content-Type": "application/json",
-};
-
-/**
- * ===============================
- * 🔹 TESTE SIMPLES DE AUTENTICAÇÃO
- * Cria um pedido básico apenas para validar o TOKEN
- * ===============================
- */
-export async function criarPedidoTeste() {
-  const payload = {
-    reference_id: "teste-token-" + Date.now(),
-
-    customer: {
-      name: "Teste",
-      email: "teste@email.com",
-    },
-
-    items: [
-      {
-        name: "Produto Teste",
-        quantity: 1,
-        unit_amount: 1000, // R$10,00
-      },
-    ],
+  const headers = {
+    Authorization: `Bearer ${PAGBANK_TOKEN}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "User-Agent": "PagBank-Node-Client"
   };
 
-  console.log("📩 REQUEST PEDIDO TESTE:", JSON.stringify(payload, null, 2));
+  auditPagBankRequest({
+    requestId,
+    url: `${PAGBANK_API}/orders`,
+    headers,
+    payload
+  });
 
   try {
-    const response = await axios.post(PAGBANK_API, payload, { headers });
-    console.log("✅ RESPONSE PEDIDO TESTE:", response.data);
+    const response = await axios.post(
+  `${PAGBANK_API}/orders`,
+  payload,
+  { headers, timeout: 10000 }
+);
+
+if (response.status >= 400) {
+  throw new Error(JSON.stringify(response.data));
+}
+
+    auditPagBankResponse({
+      requestId,
+      status: response.status,
+      data: response.data
+    });
+
     return response.data;
   } catch (error) {
-    console.error(
-      "❌ ERRO PEDIDO TESTE:",
-      error.response?.data || error.message
-    );
+    auditPagBankError({ requestId, error });
     throw error;
   }
 }
 
-/**
- * ===============================
- * 🔹 CRIAR PEDIDO PIX (PRODUÇÃO)
- * ⚠️ PIX É REAL — SE PAGAR, O DINHEIRO ENTRA
- * ===============================
- */
+/* =========================
+   PIX
+========================= */
+
 export async function criarPedidoPix(cart) {
   const total = cart.reduce(
     (acc, item) => acc + item.preco * item.quantidade,
@@ -69,38 +73,33 @@ export async function criarPedidoPix(cart) {
 
   const payload = {
     reference_id: "pedido_pix_" + Date.now(),
-
     notification_urls: [process.env.PAGBANK_WEBHOOK_URL],
 
     customer: {
-      name: "Cliente Teste",
-      email: "cliente@email.com",
-      tax_id: "12345678909",
+      name: "Arthur_Barbosa",
+      email: "arthur.shekinarfoxy@gmail.com",
+      tax_id: "52517479852"
     },
 
-    items: cart.map((item) => ({
+    items: cart.map(item => ({
       name: item.titulo,
       quantity: item.quantidade,
-      unit_amount: Math.round(item.preco * 100),
+      unit_amount: Math.round(item.preco * 100)
     })),
 
     qr_codes: [
       {
         amount: {
-          value: Math.round(total * 100),
-        },
-      },
-    ],
+          value: Math.round(total * 100)
+        }
+      }
+    ]
   };
 
-  console.log("📩 REQUEST PIX:", JSON.stringify(payload, null, 2));
+  const order = await enviarPedidoPagBank(payload);
 
-  const response = await axios.post(PAGBANK_API, payload, { headers });
-  const order = response.data;
   const qrCode = order.qr_codes?.[0];
-
   if (!qrCode?.text) {
-    console.error("❌ Resposta inesperada PagBank:", order);
     throw new Error("PIX Copia e Cola não retornado");
   }
 
@@ -109,165 +108,27 @@ export async function criarPedidoPix(cart) {
     status: order.status,
     pixCopiaCola: qrCode.text,
     qrCodeLink:
-      qrCode.links?.find((l) => l.rel === "QRCODE")?.href || null,
+      qrCode.links?.find(l => l.rel === "QRCODE")?.href || null
   };
 }
 
-/**
- * ===============================
- * 🔹 CRIAR PEDIDO CARTÃO (PRODUÇÃO)
- * ✔️ Usa CARTÕES DE TESTE
- * ✔️ Não cobra dinheiro real
- * ✔️ Não usa tokenização
- * ===============================
- */
-export async function criarPedidoCartao(cart) {
-  const total = cart.reduce(
-    (acc, item) => acc + item.preco * item.quantidade,
-    0
-  );
 
-  // 1️⃣ Buscar public key
-  const publicKey = await obterPublicKey();
-
-  // 2️⃣ Criptografar cartão
-  const encryptedCard = criptografarCartao(
-    {
-      number: "4111111111111111", // cartão de teste
-      exp_month: "12",
-      exp_year: "2030",
-      security_code: "123",
-      holder: { name: "CLIENTE TESTE" },
-    },
-    publicKey
-  );
-
-  const payload = {
-    reference_id: "pedido_cartao_" + Date.now(),
-
-    notification_urls: [process.env.PAGBANK_WEBHOOK_URL],
-
-    customer: {
-      name: "Cliente Teste",
-      email: "cliente@email.com",
-      tax_id: "12345678909",
-    },
-
-    items: cart.map((item) => ({
-      name: item.titulo,
-      quantity: item.quantidade,
-      unit_amount: Math.round(item.preco * 100),
-    })),
-
-    charges: [
-  {
-    amount: {
-      value: Math.round(total * 100),
-      currency: "BRL",
-    },
-    billing_address: {
-      street: "Rua Teste",
-      number: "100",
-      locality: "Centro",
-      city: "São Paulo",
-      region_code: "SP",
-      country: "BRA",
-      postal_code: "01001000",
-    },
-    payment_method: {
-      type: "CREDIT_CARD",
-      installments: 1,
-      capture: true,
-      card: {
-        encrypted: encryptedCard,
-      },
-    },
-  },
-],
-
-  };
-
-  // ⚠️ LOG SEGURO (sem dados sensíveis)
- console.log("📩 PAGBANK ORDER REQUEST:", {
-  reference_id: payload.reference_id,
-  customer: payload.customer,
-  items: payload.items,
-  charge: {
-    amount: payload.charges[0].amount,
-    payment_method: {
-      type: "CREDIT_CARD",
-      installments: 1,
-      capture: true,
-      card: "ENCRYPTED",
-    },
-  },
-});
-
+export async function createCreditCard(req, res) {
   try {
-    const response = await axios.post(PAGBANK_API, payload, { headers });
+    const { encryptedCard } = req.body;
 
- console.log("✅ PAGBANK ORDER RESPONSE:", {
-  order_id: response.data.id,
-  reference_id: response.data.reference_id,
-  status: response.data.status,
-  charge_id: response.data.charges?.[0]?.id,
-  charge_status: response.data.charges?.[0]?.status,
-});
+    if (!encryptedCard) {
+      return res.status(400).json({ error: "Cartão criptografado não informado" });
+    }
 
+   const result = await createOrderWithCreditCard({ encryptedCard });
 
-    return {
-      orderId: response.data.id,
-      status: response.data.status,
-      charges: response.data.charges,
-    };
+    res.json(result);
+
   } catch (error) {
-    console.error(
-      "❌ ERRO CARTÃO:",
-      error.response?.data || error.message
-    );
-    throw error;
+    console.error(error.response?.data || error.message);
+    res.status(500).json(error.response?.data || { error: "Erro interno" });
   }
 }
 
-
-const PAGBANK_PUBLIC_KEY_API = "https://api.pagseguro.com/public-keys";
-
-export async function obterPublicKey() {
-  const response = await axios.get(PAGBANK_PUBLIC_KEY_API, {
-    headers: {
-      Authorization: `Bearer ${process.env.PAGBANK_INTEGRATION_KEY}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.data?.public_key) {
-    console.error("Resposta PagBank Public Key:", response.data);
-    throw new Error("Public key não retornada pela PagBank");
-  }
-
-  return response.data.public_key;
-}
-
-
-
-
-export function criptografarCartao(cartao, publicKeyPem) {
-  const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-
-  const payload = JSON.stringify({
-    number: cartao.number,
-    exp_month: cartao.exp_month,
-    exp_year: cartao.exp_year,
-    security_code: cartao.security_code,
-    holder: {
-      name: cartao.holder.name,
-    },
-  });
-
-  const encrypted = publicKey.encrypt(payload, "RSA-OAEP", {
-    md: forge.md.sha256.create(),
-  });
-
-  return forge.util.encode64(encrypted);
-}
 

@@ -44,18 +44,18 @@ export default function EditarProduto() {
         }
 
         const dados = snap.data();
-        setForm({
-          titulo: dados.titulo,
-          resumo: dados.resumo,
-          autor: dados.autor,
-          editora: dados.editora,
-          ano: dados.ano,
-          paginas: dados.paginas,
-          isbn: dados.isbn,
-          preco: dados.preco,
-          imagem: dados.imagem,
-          genero: dados.genero,
-        });
+       setForm({
+  titulo: dados.titulo || "",
+  resumo: dados.resumo || "",
+  autor: dados.autor || "",
+  editora: dados.editora || "",
+  ano: dados.ano || "",
+  paginas: dados.paginas || "",
+  isbn: dados.isbn || "",
+  preco: dados.preco || "",
+  imagem: dados.imagem || "",
+  genero: dados.genero || "", // ← IMPORTANTE
+});
 
         setPreview(dados.imagem);
       } catch (err) {

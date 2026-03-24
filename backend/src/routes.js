@@ -1,133 +1,43 @@
 import express from "express";
-import {
-  criarPedidoPix,
-  criarPedidoCartao,
-  criarPedidoTeste
-} from "./pagbank.js";
+import { criarPedidoPix } from "./pagbank.js";
+import { createOrderWithCreditCard } from "./pagbankChargeService.js";
+
 
 const router = express.Router();
-console.log("✅ routes.js carregado");
 
-/**
- * ===============================
- * 🔹 CRIAR PEDIDO PIX (PRODUÇÃO)
- * ⚠️ PIX REAL — se pagar, entra dinheiro
- * ===============================
- */
+// PIX
 router.post("/pix/create", async (req, res) => {
   try {
     const { cart } = req.body;
-
-    if (!cart || !Array.isArray(cart) || cart.length === 0) {
-      return res.status(400).json({ error: "Carrinho inválido" });
-    }
-
-    console.log("📩 REQUEST PIX (CART):", cart);
-
-    const pedido = await criarPedidoPix(cart);
-
-    console.log("✅ PAGBANK PIX FINAL:", {
-      orderId: pedido.orderId,
-      status: pedido.status,
-    });
-
-    return res.status(201).json(pedido);
-
+    const result = await criarPedidoPix(cart);
+    res.status(201).json(result);
   } catch (error) {
-    console.error("❌ ERRO PIX:", error.response?.data || error.message);
-
-    return res.status(500).json({
-      error: "Erro ao criar pagamento PIX",
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * ===============================
- * 🔹 CRIAR PEDIDO CARTÃO (PRODUÇÃO)
- * ✔️ Cartão criptografado (PCI)
- * ✔️ Cartão de teste
- * ===============================
- */
 router.post("/credit-card/create", async (req, res) => {
   try {
-    const { cart } = req.body;
+    const { encryptedCard } = req.body;
 
-    if (!cart || !Array.isArray(cart) || cart.length === 0) {
-      return res.status(400).json({ error: "Carrinho inválido" });
+    if (!encryptedCard) {
+      return res.status(400).json({ error: "Cartão criptografado não informado" });
     }
 
-    console.log("📩 REQUEST CARTÃO (CART):", cart);
+    const result = await createOrderWithCreditCard({ encryptedCard });
 
-    const pedido = await criarPedidoCartao(cart);
+    res.status(201).json(result);
 
-    console.log("✅ PAGBANK ORDER FINAL:", {
-      orderId: pedido.orderId,
-      status: pedido.status,
-      charges: pedido.charges?.map(c => ({
-        charge_id: c.id,
-        status: c.status
-      })),
-    });
-
-    return res.status(201).json(pedido);
-
-  } catch (error) {
-    console.error("❌ ERRO CARTÃO:", error.response?.data || error.message);
-
-    return res.status(500).json({
-      error: "Erro ao criar pagamento com cartão",
-    });
+  } catch (err) {
+    console.error("❌ ERRO PAGBANK:", err.response?.data || err.message);
+    res.status(500).json(err.response?.data || { error: "Erro no pagamento" });
   }
 });
-
-/**
- * ===============================
- * 🔹 PEDIDO DE TESTE (VALIDAR TOKEN)
- * ===============================
- */
-router.post("/pedido/teste", async (_req, res) => {
-  try {
-    const pedido = await criarPedidoTeste();
-
-    console.log("✅ TOKEN VALIDADO:", {
-      order_id: pedido.id,
-      status: pedido.status,
-    });
-
-    return res.status(201).json(pedido);
-
-  } catch (error) {
-    console.error("❌ ERRO PEDIDO TESTE:", error.response?.data || error.message);
-
-    return res.status(500).json({
-      error: "Erro ao validar token PagBank",
-    });
-  }
-});
-
-/**
- * ===============================
- * 🔔 WEBHOOK PAGBANK
- * ===============================
- */
 router.post("/webhook/pagbank", (req, res) => {
-  res.sendStatus(200); // responde primeiro (obrigatório)
+  console.log("📩 WEBHOOK PAGBANK:", req.body);
 
-  console.log("🔔 WEBHOOK PAGBANK RECEBIDO:", {
-    event: req.body?.type,
-    order_id: req.body?.data?.id,
-    status: req.body?.data?.status,
-  });
+  res.status(200).json({ received: true });
 });
 
-/**
- * ===============================
- * 🔹 HEALTHCHECK
- * ===============================
- */
-router.get("/ping", (_req, res) => {
-  res.json({ ok: true });
-});
 
 export default router;

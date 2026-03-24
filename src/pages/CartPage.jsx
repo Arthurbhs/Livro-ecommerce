@@ -24,14 +24,13 @@ async function finalizarCompra() {
   try {
     setLoading(true);
 
-    const payload = {
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.titulo,
-        unit_amount: Math.round(item.preco * 100), // PagBank usa centavos
-        quantity: item.quantidade,
-      }))
-    };
+  const payload = {
+  cart: cart.map(item => ({
+    titulo: item.titulo,
+    preco: item.preco,
+    quantidade: item.quantidade,
+  }))
+};
 
     const res = await fetch("http://localhost:3001/create-pix", {
       method: "POST",

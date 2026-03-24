@@ -52,8 +52,8 @@ const commonTextFieldProps = {
 
     try {
       await emailjs.send(
-        "SEU_SERVICE_ID",
-        "SEU_TEMPLATE_ID",
+        "service_x2e8hrd",
+        "template_br10k9a",
         {
           name: formData.name,
           phone: formData.phone,
@@ -64,7 +64,7 @@ const commonTextFieldProps = {
               ? formData.time || "Não informado"
               : "Não aplicável"
         },
-        "SUA_PUBLIC_KEY"
+        "YtkPqBHNtmUd_vwpK"
       );
 
       alert("Mensagem enviada com sucesso!");

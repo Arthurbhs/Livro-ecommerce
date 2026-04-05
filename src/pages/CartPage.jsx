@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCart, removeFromCart, clearCart } from "../components/cartStorage";
+import { QRCodeCanvas } from "qrcode.react";
+import FormaPagamento from "../components/FormaPagamento";
 
 import {
   Box,
@@ -16,6 +18,48 @@ export default function CartPage() {
   const [cart, setCart] = useState([]);
   const [pix, setPix] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [cep, setCep] = useState("");
+const [frete, setFrete] = useState(null);
+const [loadingFrete, setLoadingFrete] = useState(false);
+
+function copiarPix() {
+  if (!pix?.pixCopiaCola) return;
+
+  navigator.clipboard.writeText(pix.pixCopiaCola);
+  setCopiado(true);
+
+  setTimeout(() => setCopiado(false), 2000);
+}
+
+async function calcularFrete() {
+  try {
+    setLoadingFrete(true);
+
+    const res = await fetch("https://backend-livro-ecommerce.onrender.com/api/calcular-frete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cep })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("Erro ao calcular frete");
+      return;
+    }
+
+    setFrete(data.valor);
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro no frete");
+  } finally {
+    setLoadingFrete(false);
+  }
+}
 
   useEffect(() => {
     setCart(getCart());
@@ -29,21 +73,32 @@ async function finalizarCompra() {
     titulo: item.titulo,
     preco: item.preco,
     quantidade: item.quantidade,
-  }))
+  })),
+  frete,
+  cep
 };
 
-    const res = await fetch("http://localhost:3001/create-pix", {
+    const res = await fetch("https://backend-livro-ecommerce.onrender.com/api/pix/create", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(payload),
     });
 
+    // ✅ PRIMEIRO pega a resposta
+    const data = await res.json();
+
+    // ✅ DEPOIS verifica erro
     if (!res.ok) {
-      throw new Error("Erro ao criar PIX");
+      console.error("Erro backend:", data);
+      alert("Erro: " + (data.error || "Erro ao criar PIX"));
+      return;
     }
 
-    const data = await res.json();
+    // ✅ sucesso
     setPix(data);
+
   } catch (err) {
     console.error(err);
     alert("Erro ao gerar PIX");
@@ -53,10 +108,12 @@ async function finalizarCompra() {
 }
 
 
-  const total = cart.reduce(
-    (acc, item) => acc + item.preco * item.quantidade,
-    0
-  );
+const subtotal = cart.reduce(
+  (acc, item) => acc + item.preco * item.quantidade,
+  0
+);
+
+const total = subtotal + (frete || 0);
 
   if (cart.length === 0) {
     return (
@@ -109,49 +166,54 @@ async function finalizarCompra() {
       <Divider sx={{ my: 3 }} />
 
       <Box sx={{ p: 2, border: "1px solid #000", borderRadius: 2 }}>
-        <Typography variant="h5">
-          Total: <strong>R$ {total.toFixed(2)}</strong>
-        </Typography>
+      {/* CEP */}
+<Box sx={{ mt: 2 }}>
+  <Typography>Calcular frete</Typography>
 
-        <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          sx={{ mt: 2 }}
-          onClick={finalizarCompra}
-          disabled={loading}
-        >
-          {loading ? "Gerando PIX..." : "Finalizar Compra"}
-        </Button>
+  <input
+    type="text"
+    placeholder="Digite seu CEP"
+    value={cep}
+    onChange={(e) => setCep(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "10px",
+      marginTop: "5px"
+    }}
+  />
 
-        {/* 🟢 TELA PIX */}
-        {pix && (
-          <Box sx={{ mt: 3, textAlign: "center" }}>
-            <Typography variant="h6">Pague com PIX</Typography>
+  <Button
+    variant="outlined"
+    fullWidth
+    sx={{ mt: 1 }}
+    onClick={calcularFrete}
+    disabled={loadingFrete}
+  >
+    {loadingFrete ? "Calculando..." : "Calcular Frete"}
+  </Button>
 
-            {pix.qrCodeLink && (
-              <img
-                src={pix.qrCodeLink}
-                alt="QR Code PIX"
-                style={{ width: 220, marginTop: 10 }}
-              />
-            )}
+  {frete !== null && (
+    <Typography sx={{ mt: 1 }}>
+      Frete: <strong>R$ {frete.toFixed(2)}</strong>
+    </Typography>
+  )}
+</Box>
+       <Typography variant="h5">
+  Total: <strong>R$ {total.toFixed(2)}</strong>
+</Typography>
 
-            <Typography sx={{ mt: 2 }}>Copia e cola:</Typography>
+       <Typography variant="h6" mt={2}>
+  Formas de pagamento
+</Typography>
 
-            <Typography
-              sx={{
-                wordBreak: "break-all",
-                background: "#eee",
-                p: 2,
-                borderRadius: 2,
-                mt: 1,
-              }}
-            >
-              {pix.pixCopiaCola}
-            </Typography>
-          </Box>
-        )}
+<FormaPagamento 
+  cart={cart} 
+  total={total}
+  frete={frete}
+  cep={cep}
+/>
+
+
 
         <Button
           variant="outlined"

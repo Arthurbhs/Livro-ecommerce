@@ -75,7 +75,7 @@ setSucesso(false);
       const encryptedCard = "FAKE_ENCRYPTED_CARD"; // ⚠️ depois substituir
 
       const res = await fetch(
-        "https://backend-livro-ecommerce.onrender.com/api//credit-card/create",
+        "https://backend-livro-ecommerce.onrender.com/api/credit-card/create",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -36,25 +36,39 @@ async function calcularFrete() {
   try {
     setLoadingFrete(true);
 
-    const res = await fetch("https://backend-livro-ecommerce.onrender.com/api/calcular-frete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ cep })
-    });
+    const res = await fetch(
+      "https://backend-livro-ecommerce.onrender.com/api/calcular-frete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ cep })
+      }
+    );
 
-    const data = await res.json();
+    const text = await res.text(); // 👈 pega como texto primeiro
+
+    let data;
+
+    try {
+      data = JSON.parse(text); // tenta converter
+    } catch (err) {
+      console.error("❌ NÃO é JSON:", text);
+      alert("Erro no servidor (resposta inválida)");
+      return;
+    }
 
     if (!res.ok) {
-      alert("Erro ao calcular frete");
+      console.error("❌ Erro do backend:", data);
+      alert(data.error || "Erro ao calcular frete");
       return;
     }
 
     setFrete(data.valor);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erro geral:", err);
     alert("Erro no frete");
   } finally {
     setLoadingFrete(false);

@@ -51,7 +51,7 @@ router.post("/webhook/pagbank", (req, res) => {
 });
 
 
-router.post("api/calcular-frete", async (req, res) => {
+router.post("/calcular-frete", async (req, res) => {
   try {
     const { cep } = req.body;
 

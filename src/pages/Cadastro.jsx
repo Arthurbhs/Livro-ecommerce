@@ -18,14 +18,20 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
 export default function Cadastro() {
-  const [form, setForm] = useState({
-    nome: "",
-    cpf: "",
-    email: "",
-    senha: "",
-    repetirSenha: ""
-  });
-
+ const [form, setForm] = useState({
+  nome: "",
+  cpf: "",
+  email: "",
+  senha: "",
+  repetirSenha: "",
+  cep: "",
+  rua: "",
+  numero: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+  complemento: ""
+});
   const [showSenha, setShowSenha] = useState(false);
   const [showRepetirSenha, setShowRepetirSenha] = useState(false);
 
@@ -56,12 +62,20 @@ export default function Cadastro() {
 
       const user = cred.user;
 
-     await setDoc(doc(db, "users", user.uid), {
+    await setDoc(doc(db, "users", user.uid), {
   nome: form.nome,
   cpf: form.cpf,
-  email: form.email
+  email: form.email,
+  endereco: {
+    cep: form.cep,
+    rua: form.rua,
+    numero: form.numero,
+    bairro: form.bairro,
+    cidade: form.cidade,
+    estado: form.estado,
+    complemento: form.complemento
+  }
 });
-
 
       alert("Cadastro realizado com sucesso!");
     } catch (error) {
@@ -71,6 +85,25 @@ export default function Cadastro() {
       setLoading(false);
     }
   };
+
+  const buscarCep = async (cep) => {
+  const cepLimpo = cep.replace(/\D/g, "");
+
+  if (cepLimpo.length !== 8) return;
+
+  const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+  const data = await res.json();
+
+  if (!data.erro) {
+    setForm((prev) => ({
+      ...prev,
+      rua: data.logradouro,
+      bairro: data.bairro,
+      cidade: data.localidade,
+      estado: data.uf
+    }));
+  }
+};
 
   return (
     <Box
@@ -160,7 +193,92 @@ export default function Cadastro() {
               required
             />
 
-            {/* Senha */}
+           
+
+            <TextField
+  fullWidth
+  label="CEP"
+  name="cep"
+  margin="normal"
+  value={form.cep}
+  onChange={(e) => {
+    let v = e.target.value.replace(/\D/g, "");
+    if (v.length > 8) v = v.slice(0, 8);
+
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+
+    setForm({ ...form, cep: v });
+   buscarCep}}
+  required
+/>
+
+<TextField
+  fullWidth
+  label="Rua"
+  name="rua"
+  value={form.rua}
+  onChange={handleChange}
+  margin="normal"
+  required
+/>
+
+<Box display="flex" gap={2}>
+  <TextField
+    fullWidth
+    label="Número"
+    name="numero"
+    value={form.numero}
+    onChange={handleChange}
+    margin="normal"
+    required
+  />
+
+  <TextField
+    fullWidth
+    label="Complemento"
+    name="complemento"
+    value={form.complemento}
+    onChange={handleChange}
+    margin="normal"
+  />
+</Box>
+
+<TextField
+  fullWidth
+  label="Bairro"
+  name="bairro"
+  value={form.bairro}
+  onChange={handleChange}
+  margin="normal"
+  required
+/>
+
+<Box display="flex" gap={2}>
+  <TextField
+    fullWidth
+    label="Cidade"
+    name="cidade"
+    value={form.cidade}
+    onChange={handleChange}
+    margin="normal"
+    required
+  />
+
+  <TextField
+    fullWidth
+    label="Estado (UF)"
+    name="estado"
+    value={form.estado}
+    onChange={(e) => {
+      let v = e.target.value.toUpperCase().slice(0, 2);
+      setForm({ ...form, estado: v });
+    }}
+    margin="normal"
+    required
+  />
+</Box>
+
+ {/* Senha */}
             <TextField
               fullWidth
               label="Senha"

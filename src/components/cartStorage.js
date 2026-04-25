@@ -1,7 +1,12 @@
 const CART_KEY = "cart";
 
 export function getCart() {
-  return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+  try {
+    const data = JSON.parse(localStorage.getItem("cart"));
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
 
 export function isInCart(productId) {

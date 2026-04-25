@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { getCart, removeFromCart, clearCart } from "../components/cartStorage";
 import { QRCodeCanvas } from "qrcode.react";
 import FormaPagamento from "../components/FormaPagamento";
+import { auth, db } from "../api/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import EnderecoEntrega from "../components/endereco";
 
 import {
   Box,
@@ -22,6 +25,17 @@ export default function CartPage() {
   const [cep, setCep] = useState("");
 const [frete, setFrete] = useState(null);
 const [loadingFrete, setLoadingFrete] = useState(false);
+const [usarEnderecoSalvo, setUsarEnderecoSalvo] = useState(true);
+
+const [enderecoAlternativo, setEnderecoAlternativo] = useState({
+  cep: "",
+  rua: "",
+  numero: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+  complemento: ""
+});
 
 function copiarPix() {
   if (!pix?.pixCopiaCola) return;
@@ -31,6 +45,9 @@ function copiarPix() {
 
   setTimeout(() => setCopiado(false), 2000);
 }
+const cepFinal = usarEnderecoSalvo
+  ? cep
+  : enderecoAlternativo.cep;
 
 async function calcularFrete() {
   try {
@@ -43,7 +60,7 @@ async function calcularFrete() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ cep })
+     body: JSON.stringify({ cep: cepFinal })
       }
     );
 
@@ -75,21 +92,58 @@ async function calcularFrete() {
   }
 }
 
-  useEffect(() => {
-    setCart(getCart());
-  }, []);
+useEffect(() => {
+  async function carregarCepUsuario() {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const cepSalvo = data.endereco?.cep;
+
+      if (cepSalvo) {
+        setCep(cepSalvo);
+
+        // 🔥 calcula frete automático
+        calcularFreteComCep(cepSalvo);
+      } else {
+        alert("Cadastre um endereço antes de continuar.");
+      }
+
+    } catch (err) {
+      console.error("Erro ao buscar CEP do usuário:", err);
+    }
+  }
+
+  carregarCepUsuario();
+}, []);
+useEffect(() => {
+  const storedCart = getCart();
+
+  if (Array.isArray(storedCart)) {
+    setCart(storedCart);
+  } else {
+    console.warn("❌ Cart inválido vindo do storage:", storedCart);
+    setCart([]);
+  }
+}, []);
 async function finalizarCompra() {
   try {
     setLoading(true);
 
-  const payload = {
+const payload = {
   cart: cart.map(item => ({
     titulo: item.titulo,
     preco: item.preco,
     quantidade: item.quantidade,
   })),
   frete,
-  cep
+  cep: cepFinal
 };
 
     const res = await fetch("https://backend-livro-ecommerce.onrender.com/api/pix/create", {
@@ -136,6 +190,42 @@ const total = subtotal + (frete || 0);
       </Box>
     );
   }
+  
+  async function calcularFreteComCep(cepParam) {
+  try {
+    setLoadingFrete(true);
+
+    const res = await fetch(
+      "https://backend-livro-ecommerce.onrender.com/api/calcular-frete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ cep: cepParam })
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(data);
+      return;
+    }
+
+    setFrete(data.valor);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingFrete(false);
+  }
+}
+  
+
+
+
+
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: 3 }}>
@@ -184,17 +274,37 @@ const total = subtotal + (frete || 0);
 <Box sx={{ mt: 2 }}>
   <Typography>Calcular frete</Typography>
 
-  <input
-    type="text"
-    placeholder="Digite seu CEP"
-    value={cep}
-    onChange={(e) => setCep(e.target.value)}
-    style={{
-      width: "100%",
-      padding: "10px",
-      marginTop: "5px"
-    }}
+  <Typography sx={{ mt: 1 }}>
+  CEP de entrega: <strong>{cepFinal}</strong>
+</Typography>
+
+<Box sx={{ mt: 2 }}>
+  <Typography variant="h6">Endereço</Typography>
+
+  <Button
+    variant={usarEnderecoSalvo ? "contained" : "outlined"}
+    sx={{ mt: 1, mr: 1 }}
+    onClick={() => setUsarEnderecoSalvo(true)}
+  >
+    Usar endereço salvo
+  </Button>
+
+  <Button
+    variant={!usarEnderecoSalvo ? "contained" : "outlined"}
+    sx={{ mt: 1 }}
+    onClick={() => setUsarEnderecoSalvo(false)}
+  >
+    Outro endereço
+  </Button>
+</Box>
+
+{!usarEnderecoSalvo && (
+  <EnderecoEntrega
+    endereco={enderecoAlternativo}
+    setEndereco={setEnderecoAlternativo}
   />
+)}
+
 
   <Button
     variant="outlined"

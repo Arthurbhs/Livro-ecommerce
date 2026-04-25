@@ -19,12 +19,20 @@ import {
 } from "firebase/auth";
 
 export default function EditarUsuario() {
-  const [form, setForm] = useState({
-    nome: "",
-    cpf: "",
-    avatar: "",
-    senhaNova: "",
-  });
+const [form, setForm] = useState({
+  nome: "",
+  cpf: "",
+  avatar: "",
+  senhaNova: "",
+
+  cep: "",
+  rua: "",
+  numero: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+  complemento: ""
+});
 
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,13 +66,20 @@ export default function EditarUsuario() {
 
       const data = snap.data();
 
-      setForm({
-        nome: data.nome || "",
-        cpf: data.cpf || "",
-        avatar: data.avatar || "",
-        senhaNova: "",
-      });
+setForm({
+  nome: data.nome || "",
+  cpf: data.cpf || "",
+  avatar: data.avatar || "",
+  senhaNova: "",
 
+  cep: data.endereco?.cep || "",
+  rua: data.endereco?.rua || "",
+  numero: data.endereco?.numero || "",
+  bairro: data.endereco?.bairro || "",
+  cidade: data.endereco?.cidade || "",
+  estado: data.endereco?.estado || "",
+  complemento: data.endereco?.complemento || ""
+});
       setPreview(data.avatar || "");
       setIsAdmin(data.tipo === "adm");
       setRefUser(ref);
@@ -104,23 +119,33 @@ export default function EditarUsuario() {
     setOpenConfirm(true);
   }
 
-  async function confirmarSenha() {
-    try {
-      const user = auth.currentUser;
-      const cred = EmailAuthProvider.credential(user.email, senhaConfirmacao);
-      await reauthenticateWithCredential(user, cred);
+ async function confirmarSenha() {
+  try {
+    const user = auth.currentUser;
+    const cred = EmailAuthProvider.credential(user.email, senhaConfirmacao);
+    await reauthenticateWithCredential(user, cred);
 
-      setSenhaConfirmada(true);
-      setOpenConfirm(false);
-      setSenhaConfirmacao("");
-      alert("Senha confirmada!");
-    } catch {
-      alert("Senha incorreta.");
-    }
+    setSenhaConfirmada(true);
+    setOpenConfirm(false);
+    setSenhaConfirmacao("");
+
+    alert("Senha confirmada!");
+
+    // 🔥 SALVA AUTOMATICAMENTE
+    salvar();
+
+  } catch {
+    alert("Senha incorreta.");
   }
+}
 
   // Salvar alterações
   async function salvar() {
+    if (!senhaConfirmada) {
+    solicitarConfirmacao("endereco");
+    return;
+  }
+
     try {
       setLoading(true);
 
@@ -131,12 +156,26 @@ export default function EditarUsuario() {
 
       const user = auth.currentUser;
 
-      await updateDoc(refUser, {
-        nome: form.nome,
-        cpf: form.cpf,
-        avatar: form.avatar,
-      });
+   const enderecoValido = form.cep && form.cep.length >= 8;
 
+await updateDoc(refUser, {
+  
+  nome: form.nome,
+  cpf: form.cpf,
+  avatar: form.avatar,
+
+  ...(enderecoValido && {
+    endereco: {
+      cep: form.cep,
+      rua: form.rua,
+      numero: form.numero,
+      bairro: form.bairro,
+      cidade: form.cidade,
+      estado: form.estado,
+      complemento: form.complemento
+    }
+  })
+});
       if (acao === "senhaNova" && form.senhaNova) {
         await updatePassword(user, form.senhaNova);
       }
@@ -148,6 +187,7 @@ export default function EditarUsuario() {
     } finally {
       setLoading(false);
     }
+    
   }
 
   return (
@@ -222,7 +262,6 @@ export default function EditarUsuario() {
             placeholder="Novo CPF"
             value={form.cpf}
             onChange={(e) =>
-              solicitarConfirmacao("cpf") ||
               setForm({ ...form, cpf: maskCPF(e.target.value) })
             }
           />
@@ -236,6 +275,71 @@ export default function EditarUsuario() {
             Alterar CPF
           </Button>
         </Box>
+
+        <TextField
+  fullWidth
+  label="CEP"
+  value={form.cep}
+  onChange={(e) => {
+    let v = e.target.value.replace(/\D/g, "");
+    if (v.length > 8) v = v.slice(0, 8);
+    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+
+    setForm({ ...form, cep: v });
+  }}
+  sx={{ mb: 2 }}
+/>
+
+<TextField
+  fullWidth
+  label="Rua"
+  value={form.rua}
+  onChange={(e) => setForm({ ...form, rua: e.target.value })}
+  sx={{ mb: 2 }}
+/>
+
+<Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+  <TextField
+    fullWidth
+    label="Número"
+    value={form.numero}
+    onChange={(e) => setForm({ ...form, numero: e.target.value })}
+  />
+
+  <TextField
+    fullWidth
+    label="Complemento"
+    value={form.complemento}
+    onChange={(e) => setForm({ ...form, complemento: e.target.value })}
+  />
+</Box>
+
+<TextField
+  fullWidth
+  label="Bairro"
+  value={form.bairro}
+  onChange={(e) => setForm({ ...form, bairro: e.target.value })}
+  sx={{ mb: 2 }}
+/>
+
+<Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+  <TextField
+    fullWidth
+    label="Cidade"
+    value={form.cidade}
+    onChange={(e) => setForm({ ...form, cidade: e.target.value })}
+  />
+
+  <TextField
+    fullWidth
+    label="UF"
+    value={form.estado}
+    onChange={(e) => {
+      let v = e.target.value.toUpperCase().slice(0, 2);
+      setForm({ ...form, estado: v });
+    }}
+  />
+</Box>
 
         {/* Senha */}
         <Box sx={{ display: "flex", gap: 1 }}>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Box, Typography, Button, TextField } from "@mui/material";
 import { QRCodeCanvas } from "qrcode.react";
 import { CircularProgress } from "@mui/material";
+import { Alert } from "@mui/material";
+import { getCart } from "../components/cartStorage";
 
 export default function FormaPagamento({ cart, total, frete, cep }) {
   const [metodo, setMetodo] = useState(null);
@@ -10,51 +12,56 @@ export default function FormaPagamento({ cart, total, frete, cep }) {
   const [copiado, setCopiado] = useState(false);
 const [erro, setErro] = useState(null);
 const [sucesso, setSucesso] = useState(false);
+async function gerarPix() {
+  if (loading) return;
 
-  // ================= PIX =================
-  async function gerarPix() {
-     if (loading) return; // 👈 ADICIONE AQUI
-    try {
-      setLoading(true);
-   setErro(null);
-setSucesso(false);
-      const payload = {
-        cart: cart.map(item => ({
-          titulo: item.titulo,
-          preco: item.preco,
-          quantidade: item.quantidade,
-        }))
-      };
+  try {
+    setLoading(true);
+    setErro(null);
+    setSucesso(false);
 
-      const res = await fetch(
-        "https://backend-livro-ecommerce.onrender.com/api/pix/create",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+    const realCart = getCart(); // ✅ pega do storage
 
-      const data = await res.json();
-
-      if (!res.ok) {
-       if (!res.ok) {
-  throw new Error("Erro ao gerar PIX");
-}
-        return;
-      }
-
-      setPix(data);
-
-    } catch (err) {
-      console.error(err);
-     if (!res.ok) {
-  throw new Error("Erro ao gerar PIX");
-}
-    } finally {
-      setLoading(false);
+    if (!realCart || realCart.length === 0) {
+      throw new Error("Seu carrinho está vazio");
     }
+
+    const payload = {
+      cart: realCart.map(item => ({
+        titulo: item.titulo,
+        preco: item.preco,
+        quantidade: item.quantidade,
+      })),
+      frete: Number(frete) || 0,
+      cep: cep || "01001000"
+    };
+
+    console.log("ENVIANDO:", payload); // 👈 DEBUG
+
+    const res = await fetch(
+      "https://backend-livro-ecommerce.onrender.com/api/pix/create",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Erro ao gerar PIX");
+    }
+
+    setPix(data);
+
+  } catch (err) {
+    console.error(err);
+    setErro(err.message);
+  } finally {
+    setLoading(false);
   }
+}
 
   function copiarPix() {
     if (!pix?.pixCopiaCola) return;
@@ -67,49 +74,52 @@ setSucesso(false);
 
   // ================= CARTÃO =================
   async function pagarCartao() {
-      if (loading) return; 
-    try {
-      setLoading(true);
- setErro(null);
-setSucesso(false);
-      const encryptedCard = "FAKE_ENCRYPTED_CARD"; // ⚠️ depois substituir
+  if (loading) return;
 
-      const res = await fetch(
-        "https://backend-livro-ecommerce.onrender.com/api/credit-card/create",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-  encryptedCard,
-  cart,
-  frete,
-  cep
-})
-        }
-      );
+  try {
+    setLoading(true);
+    setErro(null);
+    setSucesso(false);
 
-      const data = await res.json();
+    const encryptedCard = "FAKE_ENCRYPTED_CARD";
 
-      if (!res.ok) {
-        if (!res.ok) {
-  throw new Error("Erro ao gerar PIX");
-}
-        return;
+
+
+
+const payload = {
+  cart: realCart.map(item => ({
+    titulo: item.titulo,
+    preco: item.preco,
+    quantidade: item.quantidade,
+  })),
+  frete: Number(frete) || 0,
+  cep: cep || "01001000"
+};
+
+    const res = await fetch(
+      "https://backend-livro-ecommerce.onrender.com/api/credit-card/create",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       }
+    );
 
-     if (!res.ok) {
-  throw new Error("Erro ao gerar PIX");
-}
+    const data = await res.json();
 
-    } catch (err) {
-      console.error(err);
-      if (!res.ok) {
-  throw new Error("Erro ao gerar PIX");
-}
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(data.error || "Erro no pagamento");
     }
+
+    setSucesso(true);
+
+  } catch (err) {
+    console.error(err);
+    setErro(err.message || "Erro no pagamento");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <Box sx={{ mt: 3 }}>

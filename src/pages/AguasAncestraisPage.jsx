@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Box, Container, Typography, Grid, Button } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -21,9 +21,25 @@ const AguasAncestraisPage = () => {
         setAlreadyInCart(isInCart(data.id));
       }
     }
+    
 
     fetchProduct();
   }, []);
+
+  const audioRef = useRef(null);
+const [tocando, setTocando] = useState(false);
+
+function toggleAudio() {
+  if (!audioRef.current) return;
+
+  if (tocando) {
+    audioRef.current.pause();
+  } else {
+    audioRef.current.play();
+  }
+
+  setTocando(!tocando);
+}
 
   function handleCartToggle() {
     if (!product) return;
@@ -191,6 +207,49 @@ const AguasAncestraisPage = () => {
           <Typography variant="h6" sx={{ mb: 3 }}>
            outros Formatos disponíveis
           </Typography>
+
+{/* 🎧 AUDIOBOOK */}
+<Box mt={10} sx={{margin: 10}} s textAlign="center">
+  <Typography variant="h6" sx={{ mb: 3 }}>
+    🎧 Versão Audiobook
+  </Typography>
+
+  <audio ref={audioRef} src="audio_aguas_ancestrais_nego_panda.mp3" />
+
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    p: 2,
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, #6a0dad, #2a0f3d)",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+  }}
+>
+  <Button
+    onClick={toggleAudio}
+    sx={{
+      minWidth: 50,
+      height: 50,
+      borderRadius: "50%",
+      background: "#fff",
+      color: "#6a0dad",
+      fontWeight: "bold",
+      "&:hover": {
+        background: "#eee",
+      },
+    }}
+  >
+    {tocando ? "⏸" : "▶"}
+  </Button>
+
+  <Typography sx={{ flex: 1 }}>
+    Águas Ancestrais — Audiobook
+  </Typography>
+</Box>
+</Box>
+
 
           <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", justifyContent: "center" }}>
             <Button
